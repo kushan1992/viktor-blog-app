@@ -1,56 +1,85 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import BlogCard from "./BlogCard";
 import Pagination from "./Pagination";
-import type { Post } from "../types/post";
+import BlogControls from "./BlogControls";
+import { fetchPosts } from "../api/blog";
+import type { Category, Post } from "../types/post";
 
-interface PostsResponse {
-  data: Post[];
-  total: number;
-}
+const POSTS_PER_PAGE = 10;
 
-const fetchPosts = async ({
-  queryKey,
-}: {
-  queryKey: [string, number, number];
-}): Promise<PostsResponse> => {
-  const [, page, limit] = queryKey;
-  const res = await axios.get(
-    `${import.meta.env.VITE_API_URL}blogposts/?_start=${page}&_limit=${limit}`
+async function fetchCategories(): Promise<Category[]> {
+  const res = await fetch(
+    `${import.meta.env.VITE_API_URL}/blogpost-categories`
   );
-  return {
-    data: res.data,
-    total: parseInt(res.headers["x-total-count"] || "100", 10),
-  };
-};
+  const data = await res.json();
+  return data.map((category: Category) => category);
+}
 
 function BlogList() {
   const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 10;
+  const [search, setSearch] = useState("");
+  const [category, setCategory] = useState("");
+  const [sort, setSort] = useState("");
+  const [order, setOrder] = useState<"ASC" | "DESC">("ASC");
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["posts", currentPage, postsPerPage] as const,
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, category, sort, order]);
+
+  const { data, isLoading, error, isFetching } = useQuery({
+    queryKey: [
+      "posts",
+      currentPage,
+      POSTS_PER_PAGE,
+      search || undefined,
+      category || undefined,
+      sort ? `${sort}:${order}` : undefined,
+    ] as const,
     queryFn: fetchPosts,
+    keepPreviousData: true,
   });
 
-  if (isLoading) return <div className="text-center py-8">Loading...</div>;
+  const { data: categories = [] } = useQuery({
+    queryKey: ["categories"],
+    queryFn: () => fetchCategories(),
+    staleTime: Infinity,
+  });
+
+  if (isLoading && !data)
+    return <div className="text-center py-8">Loading...</div>;
   if (error)
     return (
-      <div className="text-center text-red-500 py-8">Error fetching posts</div>
+      <div className="text-center text-red-500 py-8">Error loading posts</div>
     );
 
-  const posts = data?.data || [];
-  const totalPosts = data?.total || 0;
-  const totalPages = Math.ceil(totalPosts / postsPerPage);
+  const posts = data?.data ?? [];
+  const totalPosts = data?.total ?? 0;
+  const totalPages = Math.ceil(totalPosts / POSTS_PER_PAGE);
 
   return (
     <>
+      <BlogControls
+        search={search}
+        setSearch={setSearch}
+        category={category}
+        setCategory={setCategory}
+        sort={sort}
+        setSort={setSort}
+        order={order}
+        setOrder={setOrder}
+        categories={categories}
+      />
+
+      {isFetching && !isLoading && (
+        <div className="text-center py-2 text-sm text-gray-500">Updating…</div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {posts.map((post) => (
-          <BlogCard key={post.id} post={post} />
-        ))}
+        {posts &&
+          posts.map((post: Post) => <BlogCard key={post.id} post={post} />)}
       </div>
+
       <Pagination
         currentPage={currentPage}
         totalPages={totalPages}

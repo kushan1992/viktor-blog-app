@@ -6,13 +6,13 @@ interface BlogCardProps {
 }
 
 function BlogCard({ post }: BlogCardProps) {
-  const shortDesc =
-    post.body.length > 100 ? post.body.slice(0, 100) + "..." : post.body;
+  const body = post?.body || "";
+  const shortDesc = body.length > 100 ? body.slice(0, 100) + "..." : body;
   const coverImageUrl = post?.cover?.url
-    ? `https://cms.viktor.ai${post.cover.url}`
+    ? `${import.meta.env.VITE_API_URL}${post.cover.url}`
     : "https://via.placeholder.com/150";
   const authorAvatarUrl = post?.author?.avatar?.url
-    ? `https://cms.viktor.ai${post.author.avatar.url}`
+    ? `${import.meta.env.VITE_API_URL}${post.author.avatar.url}`
     : "https://via.placeholder.com/50";
 
   return (

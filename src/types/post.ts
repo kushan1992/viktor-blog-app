@@ -16,3 +16,8 @@ export interface Post {
     created_at: string;
   }
 }
+
+export interface Category {
+  id: string;
+  name: string;
+}
