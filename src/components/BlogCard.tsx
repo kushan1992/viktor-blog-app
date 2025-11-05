@@ -10,10 +10,10 @@ function BlogCard({ post }: BlogCardProps) {
   const shortDesc = body.length > 100 ? body.slice(0, 100) + "..." : body;
   const coverImageUrl = post?.cover?.url
     ? `${import.meta.env.VITE_API_URL}${post.cover.url}`
-    : "https://via.placeholder.com/150";
+    : "https://placehold.co/600x400";
   const authorAvatarUrl = post?.author?.avatar?.url
     ? `${import.meta.env.VITE_API_URL}${post.author.avatar.url}`
-    : "https://via.placeholder.com/50";
+    : "https://placehold.co/600x400";
 
   return (
     <Link
