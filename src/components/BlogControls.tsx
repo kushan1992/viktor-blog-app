@@ -26,7 +26,7 @@ export default function BlogControls({
   categories,
 }: Props) {
   const [localSearch, setLocalSearch] = useState(search);
-  const [debouncedSearch] = useDebounce(localSearch, 400);
+  const [debouncedSearch] = useDebounce(localSearch, 1000);
 
   useEffect(() => {
     setSearch(debouncedSearch);
